@@ -5,7 +5,13 @@ using UnityEngine;
 public class EnemyScript : MonoBehaviour
 {
     #region Variables
-    public enum enemyStates { WalkingL, WalkingR, Idle };
+    public enum enemyStates { WalkingL = 0, WalkingR = 1, Idle = 2 };
+
+    [Header("Animations")]
+    //A reference to the animator that controls which animation to play
+    public Animator animator;
+    //The name of the parameter that controls which state to play
+    public string stateParameterName = "State";
 
     [Header("States")]
     public enemyStates state;
@@ -56,6 +62,8 @@ public class EnemyScript : MonoBehaviour
                 Idle();
                 break;
         }
+
+        UpdateAnimation();
     }
 
     void WalkingL()
@@ -69,6 +77,7 @@ public class EnemyScript : MonoBehaviour
             state = enemyStates.WalkingR;
             walkedTime = 0;
         }
+        cachedState = state;
     }
 
     void WalkingR()
@@ -82,6 +91,7 @@ public class EnemyScript : MonoBehaviour
             state = enemyStates.WalkingL;
             walkedTime = 0;
         }
+        cachedState = state;
     }
 
     void Idle()
@@ -112,5 +122,10 @@ public class EnemyScript : MonoBehaviour
         }
 
         state = cachedState;
+    }
+
+    void UpdateAnimation()
+    {
+        animator.SetInteger(stateParameterName, (int)state);
     }
 }
