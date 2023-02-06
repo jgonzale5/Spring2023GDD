@@ -1,11 +1,12 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class EnemyScript : MonoBehaviour
 {
     #region Variables
-    public enum enemyStates { WalkingL = 0, WalkingR = 1, Idle = 2 };
+    public enum enemyStates { WalkingL = 0, WalkingR = 1, Idle = 2, Combat = 3 };
 
     [Header("Animations")]
     //A reference to the animator that controls which animation to play
@@ -30,13 +31,35 @@ public class EnemyScript : MonoBehaviour
 
     //The controller that will handle basic movement collisions for us
     private CharacterController controller;
-    #endregion 
 
+    [Header("Combat")]
+    //How far the enemy must be from the player to see them
+    public float range = 1f;
+
+    //The sparks that spawn when the sword hits down
+    public ParticleSystem sparks;
+
+    //Will tell us if we're in range of the target
+    private bool inRange = false;
+    
+    //The target that this enemy is attacking
+    private Transform target = null;
+    
+    #endregion 
+    
     // Start is called before the first frame update
     void Start()
     {
         //Get the character controller component on this game object
         controller = GetComponent<CharacterController>();
+
+        GameObject temp;
+        temp = GameObject.FindGameObjectWithTag("Player");
+        //if ((temp = GameObject.FindGameObjectWithTag("Player")) != null)
+        if (temp != null)
+        {
+            target = temp.transform;
+        }
 
         /*
         if (TryGetComponent<CharacterController>(out controller))
@@ -48,7 +71,10 @@ public class EnemyScript : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        Freeze();
+        CheckRange();
+
+        if (!inRange)
+            Freeze();
 
         switch (state)
         {
@@ -61,6 +87,9 @@ public class EnemyScript : MonoBehaviour
             case enemyStates.Idle:
                 Idle();
                 break;
+            case enemyStates.Combat:
+                Combat();
+                break;
         }
 
         UpdateAnimation();
@@ -68,6 +97,19 @@ public class EnemyScript : MonoBehaviour
 
     void WalkingL()
     {
+        //The next three are equivalent
+        //if (!inRange)
+        //if (inRange != true)
+        //if (inRange == false)
+        //The next two are equivalent
+        //if (inRange == true)
+        if (inRange)
+        {
+            state = enemyStates.Combat;
+            walkedTime = 0;
+            return;
+        }
+
         walkedTime += Time.deltaTime;
 
         controller.Move(Vector3.left * speed * Time.deltaTime);
@@ -82,6 +124,13 @@ public class EnemyScript : MonoBehaviour
 
     void WalkingR()
     {
+        if (inRange)
+        {
+            state = enemyStates.Combat;
+            walkedTime = 0;
+            return;
+        }
+
         walkedTime += Time.deltaTime;
 
         controller.Move(Vector3.right * speed * Time.deltaTime);
@@ -96,7 +145,49 @@ public class EnemyScript : MonoBehaviour
 
     void Idle()
     {
+        if (inRange)
+        {
+            state = enemyStates.Combat;
+            walkedTime = 0;
+            return;
+        }
 
+
+    }
+
+    void Combat()
+    {
+        //If we're not in range, we go back to the last state that was put in the cache
+        if (!inRange)
+        {
+            state = cachedState;
+            return;
+        }
+
+
+    }
+
+    void CheckRange()
+    {
+        //If there is no target, the enemy cannot be in range
+        if (target == null)
+        {
+            inRange = false;
+            return;
+        }
+
+        //We subtract the position of the enemy from that of the target, it will give us a vector with direction and magnitude.
+        //The magnitude is the distance between both points.
+        //If the magnitude is less than the range, this enemy is in range.
+        //if ( (target.position - this.transform.position).magnitude <= range)
+        //if (Vector3.Distance(target.position, this.transform.position) <= range)
+        //{
+        //    inRange = true;
+        //}
+        //else
+        //    inRange = false;
+
+        inRange = (Vector3.Distance(target.position, this.transform.position) <= range);
     }
 
     void Freeze()
@@ -127,5 +218,14 @@ public class EnemyScript : MonoBehaviour
     void UpdateAnimation()
     {
         animator.SetInteger(stateParameterName, (int)state);
+    }
+
+    void PlaySparks()
+    {
+        Debug.Log("Pschoo");
+        if (sparks != null)
+        {
+            sparks.Play();
+        }
     }
 }
