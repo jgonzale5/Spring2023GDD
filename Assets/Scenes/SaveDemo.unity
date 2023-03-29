@@ -1761,6 +1761,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42d1a538631f8264fa29a8a9b6763ce1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  SaveMode: 1
   A: {fileID: 980386977}
   B: {fileID: 828488839}
   C: {fileID: 1391893851}
